@@ -1,32 +1,26 @@
-<?php
-defined('BASEPATH') or exit('No direct script access allowed');
-/**
- * Blade Integration Class
- *
- * Classe utilizada para integração entre o CodeIgniter e a Blade Template Engine
- */
+<?php defined('BASEPATH') or exit('No direct script access allowed');    
 class Blade
 {
+    private $factory;    
     public function __construct()
     {
-        // define os diretórios onde estarão armazenadas as views e o cache
-        $path = [
-            APPPATH . 'views/'
-        ];
-        $cachePath = APPPATH . 'cache/views';
-        // aplica as devidas configurações e instanciações da Blade Template Engine
-        $compiler = new \Xiaoler\Blade\Compilers\BladeCompiler($cachePath);
-        $engine = new \Xiaoler\Blade\Engines\CompilerEngine($compiler);
-        $finder = new \Xiaoler\Blade\FileViewFinder($path);
-        $finder->addExtension('php');
-        $this->factory = new \Xiaoler\Blade\Factory($engine, $finder);
-    }
-    /*
-     * Os métodos criados a seguir servirão para que você possa utilizar os
-     * recursos de carregamento das views usando, por exemplo,
-     * $this->blade->view()
-     */
-    
+        $path = [APPPATH . 'views/'];
+        $cachePath = APPPATH . 'cache/views';            
+        $file = new \Xiaoler\Blade\Filesystem;    
+        $compiler = new \Xiaoler\Blade\Compilers\BladeCompiler($file, $cachePath);       
+        $compiler->directive('datetime', function($timestamp) {
+            return preg_replace('/(\(\d+\))/', 
+                      '<?php echo date("Y-m-d H:i:s", $1); ?>', $timestamp);
+        });            
+        $resolver = new \Xiaoler\Blade\Engines\EngineResolver;
+        $resolver->register('blade', function () use ($file, $cachePath) {
+            return new \Xiaoler\Blade\Engines\CompilerEngine(
+                    new \Xiaoler\Blade\Compilers\BladeCompiler($file, $cachePath));
+        });    
+        $this->factory = new \Xiaoler\Blade\Factory($resolver, 
+                            new \Xiaoler\Blade\FileViewFinder($file, $path));
+        $this->factory->addExtension('tpl', 'blade');
+    }        
     public function view($path, $vars = [])
     {
         echo $this->factory->make($path, $vars);
