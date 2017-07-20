@@ -20,7 +20,7 @@ class Welcome extends CI_Controller {
 	 */
 	public function index()
 	{
-    		$data['message'] = 'message 1';
-        	$this->blade->view('test_message', $data);
+    		$data['message'] = 'teste 1';
+		$this->blade->view('test_message', $data);
 	}
 }
